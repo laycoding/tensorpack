@@ -3,6 +3,7 @@
 # File: imagenet_utils.py
 
 
+import os
 import cv2
 import numpy as np
 import multiprocessing
@@ -18,7 +19,11 @@ from tensorpack.utils.stats import RatioCounter
 from tensorpack.models import regularize_cost
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils import logger
+
 from tensorpack.dataflow.base import RNGDataFlow
+from tensorpack.utils.fs import mkdir_p
+
+SIZE = 224
 
 class HoMGRMeta(object):
 	"""
@@ -60,16 +65,16 @@ class HoMGRMeta(object):
 			list: list of (image filename, label)
 		"""
 		assert name in ['train', 'val', 'test']
-		assert dir_structure in ['original', 'train']
+		# assert dir_structure in ['original', 'train']
 
 		with open(self.dir + os.sep + name + '/image_' + name + '.txt') as dict_map:
 			ret = []
 			lines = dict_map.readlines()
 			for name_label in lines[1:]:
 				name = name_label.strip().split(',')[0]
-				label = int(name_label.strip().split(',')[0]) - 1
+				label = int(name_label.strip().split(',')[1]) - 1
 
-				ret.append(name, label)
+				ret.append((name, label))
 		assert len(ret)
 		return ret
 
@@ -86,7 +91,7 @@ class HoMGRFiles(RNGDataFlow):
 		if name == 'train':
 			dir_structure = 'train'
 		
-		meta = HoMGRMeta(meta_dir)
+		meta = HoMGRMeta(dir)
 		self.imglist = meta.get_image_list(name, dir_structure)
 
 		for fname, _ in self.imglist[:10]:
@@ -112,10 +117,12 @@ class HoMGR(HoMGRFiles):
 	def __init__(self, dir, name, meta_dir=None, shuffle=None, dir_structure=None):
 		super(HoMGR, self).__init__(
 			dir, name, meta_dir, shuffle, dir_structure)
+		self.im_size = (SIZE, SIZE)
 
 	def get_data(self):
 		for fname, label in super(HoMGR, self).get_data():
 			im = cv2.imread(fname, cv2.IMREAD_COLOR)
+			im = cv2.resize(im, self.im_size)
 			assert im is not None, fname
 			yield [im, label]
 

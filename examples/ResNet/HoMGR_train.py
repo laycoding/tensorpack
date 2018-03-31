@@ -117,7 +117,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--depth', help='resnet depth',
                         type=int, default=50, choices=[18, 34, 50, 101, 152])
     parser.add_argument('--eval', action='store_true')
-    parser.add_argument('--batch', default=256, type=int,
+    parser.add_argument('--batch', default=16, type=int,
                         help='total batch size. 32 per GPU gives best accuracy, higher values should be similarly good')
     parser.add_argument('--mode', choices=['resnet', 'preact', 'se'],
                         help='variants of resnet to use', default='resnet')
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     model = Model(args.depth, args.data_format, args.mode)
     if args.eval:
-        batch = 128    # something that can run on one gpu
+        batch = 16    # something that can run on one gpu
         ds = get_data('val', batch)
         eval_on_HoMGR(model, get_model_loader(args.load), ds)
     else:
@@ -136,7 +136,7 @@ if __name__ == '__main__':
             logger.set_logger_dir(os.path.join('train_log', 'tmp'), 'd')
         else:
             logger.set_logger_dir(
-                os.path.join('train_log', 'imagenet-{}-d{}'.format(args.mode, args.depth)))
+                os.path.join('train_log', 'HoMGR-{}-d{}'.format(args.mode, args.depth)))
 
         config = get_config(model, fake=args.fake)
         if args.load:
